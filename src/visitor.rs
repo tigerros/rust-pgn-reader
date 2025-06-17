@@ -1,6 +1,6 @@
-use shakmaty::{san::SanPlus, Outcome};
+use shakmaty::san::SanPlus;
 
-use crate::types::{Nag, RawComment, RawTag, Skip};
+use crate::types::{Nag, Outcome, RawComment, RawTag, Skip};
 
 /// Consumes games from a reader.
 ///
@@ -37,7 +37,7 @@ pub trait Visitor {
     /// matching `(`.
     fn end_variation(&mut self) {}
     /// Called for each game termination, like `*` or `1-0`.
-    fn outcome(&mut self, _outcome: Option<Outcome>) {}
+    fn outcome(&mut self, _outcome: Outcome) {}
 
     /// Called after parsing a game. Can produce a custom result.
     fn end_game(&mut self) -> Self::Result;

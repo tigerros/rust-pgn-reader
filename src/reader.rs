@@ -5,12 +5,12 @@ use std::{
 
 use shakmaty::{
     san::{San, SanPlus, Suffix},
-    CastlingSide, Color, Outcome,
+    CastlingSide, Color,
 };
 
 // use slice_deque::SliceDeque;
 use crate::{
-    types::{Nag, RawComment, RawTag, Skip},
+    types::{Nag, Outcome, RawComment, RawTag, Skip},
     visitor::{SkipVisitor, Visitor},
 };
 
@@ -281,12 +281,12 @@ trait ReadPgn {
                     self.bump();
                     if self.buffer().starts_with(b"-0") {
                         self.consume(2);
-                        visitor.outcome(Some(Outcome::Decisive {
+                        visitor.outcome(Outcome::Definitive(shakmaty::Outcome::Decisive {
                             winner: Color::White,
                         }));
                     } else if self.buffer().starts_with(b"/2-1/2") {
                         self.consume(6);
-                        visitor.outcome(Some(Outcome::Draw));
+                        visitor.outcome(Outcome::Definitive(shakmaty::Outcome::Draw));
                     } else {
                         let token_end = self.find_token_end(0);
                         self.consume(token_end);
@@ -296,7 +296,7 @@ trait ReadPgn {
                     self.bump();
                     if self.buffer().starts_with(b"-1") {
                         self.consume(2);
-                        visitor.outcome(Some(Outcome::Decisive {
+                        visitor.outcome(Outcome::Definitive(shakmaty::Outcome::Decisive {
                             winner: Color::Black,
                         }));
                     } else if self.buffer().starts_with(b"-0") {
@@ -373,7 +373,7 @@ trait ReadPgn {
                     }
                 }
                 b'*' => {
-                    visitor.outcome(None);
+                    visitor.outcome(Outcome::Unknown);
                     self.bump();
                 }
                 b' ' | b'\t' | b'\r' | b'P' | b'.' => {

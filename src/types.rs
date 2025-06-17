@@ -5,6 +5,82 @@ use std::{
     str::{self, FromStr, Utf8Error},
 };
 
+use shakmaty::Color;
+
+/// Like [`shakmaty::Outcome`], but with an additional variant exclusive to PGNs; [`Outcome::Unknown`].
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+pub enum Outcome {
+    Definitive(shakmaty::Outcome),
+    /// `*` - Game in progress, game abandoned, or result otherwise unknown.
+    Unknown,
+}
+
+impl Outcome {
+    pub const fn winner(self) -> Option<Color> {
+        match self {
+            Outcome::Definitive(outcome) => outcome.winner(),
+            Outcome::Unknown => None,
+        }
+    }
+
+    pub const fn definitive(self) -> Option<shakmaty::Outcome> {
+        match self {
+            Outcome::Definitive(outcome) => Some(outcome),
+            Outcome::Unknown => None,
+        }
+    }
+
+    pub const fn from_ascii(bytes: &[u8]) -> Result<Outcome, ParseOutcomeError> {
+        if let Ok(outcome) = shakmaty::Outcome::from_ascii(bytes) {
+            return Ok(Outcome::Definitive(outcome));
+        }
+
+        match bytes {
+            b"*" => Ok(Outcome::Unknown),
+            _ => Err(ParseOutcomeError),
+        }
+    }
+
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Outcome::Definitive(outcome) => outcome.as_str(),
+            Outcome::Unknown => "*",
+        }
+    }
+}
+
+impl From<shakmaty::Outcome> for Outcome {
+    fn from(outcome: shakmaty::Outcome) -> Self {
+        Outcome::Definitive(outcome)
+    }
+}
+
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+/// Error when parsing an [`Outcome`].
+///
+/// The string didn't match any of:
+/// - `1-0`
+/// - `0-1`
+/// - `1-2/1-2`
+/// - `*`
+pub struct ParseOutcomeError;
+
+impl fmt::Display for ParseOutcomeError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_str("invalid outcome")
+    }
+}
+
+impl std::error::Error for ParseOutcomeError {}
+
+impl FromStr for Outcome {
+    type Err = ParseOutcomeError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Outcome::from_ascii(s.as_bytes())
+    }
+}
+
 /// Tell the reader to skip over a game or variation.
 #[derive(Clone, Eq, PartialEq, Debug)]
 #[must_use]
