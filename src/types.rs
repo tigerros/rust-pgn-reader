@@ -71,7 +71,7 @@ impl fmt::Display for ParseOutcomeError {
     }
 }
 
-impl std::error::Error for ParseOutcomeError {}
+impl Error for ParseOutcomeError {}
 
 impl FromStr for Outcome {
     type Err = ParseOutcomeError;
